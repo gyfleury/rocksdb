@@ -61,7 +61,7 @@ namespace ROCKSDB_NAMESPACE::port {
 namespace {
 
 #if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_OPENBSD) || \
-    defined(OS_GNU_KFREEBSD)
+    defined(OS_GNU_KFREEBSD) || defined(OS_GNU_HURD)
 const char* GetExecutableName() {
   static char name[1024];
 

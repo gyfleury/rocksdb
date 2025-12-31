@@ -7,13 +7,14 @@
 
 #include "rocksdb/env.h"
 #include "rocksdb/status.h"
-#ifdef __FreeBSD__
+#if defined (__FreeBSD__) || defined(__GNU__)
 #include <sys/types.h>
 #include <sys/wait.h>
 #endif
 #ifdef __OpenBSD__
 #include <sys/wait.h>
 #endif
+
 #include <vector>
 
 #include "test_util/testharness.h"

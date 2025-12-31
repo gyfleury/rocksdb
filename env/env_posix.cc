@@ -29,7 +29,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#if defined(OS_LINUX) || defined(OS_SOLARIS) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_SOLARIS) || defined(OS_ANDROID) || defined(OS_GNU_HURD)
 #include <sys/statfs.h>
 #endif
 #include <sys/statvfs.h>
@@ -43,8 +43,8 @@
 #include <algorithm>
 #include <ctime>
 // Get nano time includes
-#if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_GNU_KFREEBSD)
-#elif defined(__MACH__)
+#if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_GNU_KFREEBSD) || defined(OS_GNU_HURD)
+#elif defined(__MACH__) && !defined(__GNU__)
 #include <Availability.h>
 #include <mach/clock.h>
 #include <mach/mach.h>
@@ -143,13 +143,13 @@ class PosixClock : public SystemClock {
 
   uint64_t NowNanos() override {
 #if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_GNU_KFREEBSD) || \
-    defined(OS_AIX)
+    defined(OS_AIX) || defined(OS_GNU_HURD)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return static_cast<uint64_t>(ts.tv_sec) * 1000000000 + ts.tv_nsec;
 #elif defined(OS_SOLARIS)
     return gethrtime();
-#elif defined(__MACH__)
+#elif defined(__MACH__) && !defined(__GNU__)
     clock_serv_t cclock;
     mach_timespec_t ts;
     host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
@@ -165,7 +165,7 @@ class PosixClock : public SystemClock {
 
   uint64_t CPUMicros() override {
 #if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_GNU_KFREEBSD) || \
-    defined(OS_AIX) || (defined(__MACH__) && defined(__MAC_10_12))
+    defined(OS_AIX) || (defined(__MACH__) && defined(__MAC_10_12)) && !defined(OS_GNU_HURD)
     struct timespec ts;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
     return (static_cast<uint64_t>(ts.tv_sec) * 1000000000 + ts.tv_nsec) / 1000;
@@ -176,7 +176,7 @@ class PosixClock : public SystemClock {
 
   uint64_t CPUNanos() override {
 #if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_GNU_KFREEBSD) || \
-    defined(OS_AIX) || (defined(__MACH__) && defined(__MAC_10_12))
+    defined(OS_AIX) || (defined(__MACH__) && defined(__MAC_10_12)) && !defined(OS_GNU_HURD)
     struct timespec ts;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
     return static_cast<uint64_t>(ts.tv_sec) * 1000000000 + ts.tv_nsec;
@@ -319,7 +319,7 @@ class PosixEnv : public CompositeEnv {
 
   uint64_t GetThreadID() const override {
     uint64_t thread_id = 0;
-#if defined(_GNU_SOURCE) && defined(__GLIBC_PREREQ)
+#if defined(_GNU_SOURCE) && defined(__GLIBC_PREREQ) && !defined(__GNU__)
 #if __GLIBC_PREREQ(2, 30)
     thread_id = ::gettid();
 #else   // __GLIBC_PREREQ(2, 30)
